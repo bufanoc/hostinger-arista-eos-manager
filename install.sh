@@ -24,8 +24,8 @@ echo "✅ Starting installation for '$DOMAIN_NAME'..."
 echo ""
 
 echo "⚙️ [1/6] Updating system and installing dependencies (Nginx, cURL)..."
-apt-get update && apt-get upgrade -y > /dev/null
-apt-get install -y nginx curl > /dev/null
+apt-get update && apt-get upgrade -y
+apt-get install -y nginx curl
 echo "✓ Dependencies installed."
 echo ""
 
@@ -46,8 +46,10 @@ if [ -z "$SUDO_USER_NAME" ] || [ -z "$USER_HOME" ]; then
     exit 1
 fi
 
-sudo -u $SUDO_USER_NAME bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash" > /dev/null
-sudo -u $SUDO_USER_NAME bash -c 'export NVM_DIR="'$USER_HOME'/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm install 20' > /dev/null
+echo "Installing NVM..."
+sudo -u $SUDO_USER_NAME bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash"
+echo "Installing Node.js v20..."
+sudo -u $SUDO_USER_NAME bash -c 'export NVM_DIR="'$USER_HOME'/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm install 20'
 
 NODE_PATH=$(find $USER_HOME/.nvm/versions/node -maxdepth 2 -type f -name "node")
 NPM_PATH=$(find $USER_HOME/.nvm/versions/node -maxdepth 2 -type f -name "npm")
@@ -65,7 +67,8 @@ SCRIPT_DIR=$(pwd)
 rsync -a --delete --chown=$SUDO_USER_NAME:$SUDO_USER_NAME --exclude '.git' --exclude 'node_modules' --exclude 'install.sh' "$SCRIPT_DIR/" "$APP_DIR/"
 
 echo "Building application. This may take a moment..."
-sudo -u $SUDO_USER_NAME bash -c "cd $APP_DIR && npm install && npm run build" > /dev/null
+echo "Installing npm dependencies and building the application..."
+sudo -u $SUDO_USER_NAME bash -c "cd $APP_DIR && npm install && npm run build"
 echo "✓ Application deployed and built."
 echo ""
 
