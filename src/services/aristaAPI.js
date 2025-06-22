@@ -176,7 +176,7 @@ export const processSwitchData = (rawData) => {
   
   // Count active interfaces
   const activeInterfaces = Object.values(interfacesData.interfaceStatuses || {}).filter(
-    interface => interface.linkStatus === 'connected'
+    intf => intf.linkStatus === 'connected'
   ).length;
   
   // Count total interfaces

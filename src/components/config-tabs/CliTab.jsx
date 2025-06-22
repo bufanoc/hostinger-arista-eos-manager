@@ -6,7 +6,7 @@ import { Terminal, Zap, Upload, Download, RefreshCw, Copy, Check, AlertOctagon }
 import { useToast } from '@/components/ui/use-toast';
 import { executeCli, executeShowCommand } from '@/services/cliCommands';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// ScrollArea removed to fix build error
 import { Badge } from '@/components/ui/badge';
 
 const CliTab = ({ switchData }) => {
@@ -274,7 +274,7 @@ const CliTab = ({ switchData }) => {
           </TabsContent>
           
           <TabsContent value="output" className="mt-4">
-            <ScrollArea className="h-[350px] rounded-lg border border-gray-600 bg-black/40 p-4">
+            <div className="h-[350px] overflow-auto rounded-lg border border-gray-600 bg-black/40 p-4">
               <div ref={outputRef} className="space-y-4">
                 {commandHistory.length > 0 ? (
                   commandHistory.map(entry => (
@@ -309,7 +309,7 @@ const CliTab = ({ switchData }) => {
                   </div>  
                 )}
               </div>
-            </ScrollArea>
+            </div>
             
             <div className="flex justify-end mt-4">
               <Button 
