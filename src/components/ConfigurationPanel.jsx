@@ -15,12 +15,13 @@ import {
   Layers
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import InterfacesTab from '@/components/config-tabs/InterfacesTab';
-import VlansTab from '@/components/config-tabs/VlansTab';
+import InterfacesTab from './config-tabs/InterfacesTab';
+import CliTab from './config-tabs/CliTab';
+import { getConnection } from '@/services/connectionManager';
 import RoutingTab from '@/components/config-tabs/RoutingTab';
 import VxlanTab from '@/components/config-tabs/VxlanTab';
 import SecurityTab from '@/components/config-tabs/SecurityTab';
-import CliTab from '@/components/config-tabs/CliTab';
+import VlansTab from '@/components/config-tabs/VlansTab';
 
 const ConfigurationPanel = ({ switchData, onClose }) => {
   const { toast } = useToast();
@@ -116,15 +117,15 @@ const ConfigurationPanel = ({ switchData, onClose }) => {
 
             <div className="mt-6">
               <TabsContent value="interfaces">
-                <InterfacesTab handleFeatureClick={handleFeatureClick} />
+                {activeTab === 'interfaces' && <InterfacesTab switchData={switchData} />}
               </TabsContent>
 
               <TabsContent value="vlans">
-                <VlansTab handleFeatureClick={handleFeatureClick} />
+                {activeTab === 'vlans' && <VlansTab switchData={switchData} />}
               </TabsContent>
 
               <TabsContent value="routing">
-                <RoutingTab handleFeatureClick={handleFeatureClick} />
+                {activeTab === 'routing' && <RoutingTab switchData={switchData} />}
               </TabsContent>
 
               <TabsContent value="vxlan">
@@ -136,7 +137,7 @@ const ConfigurationPanel = ({ switchData, onClose }) => {
               </TabsContent>
 
               <TabsContent value="cli">
-                <CliTab switchData={switchData} handleFeatureClick={handleFeatureClick} />
+                {activeTab === 'cli' && <CliTab switchData={switchData} />}
               </TabsContent>
             </div>
           </Tabs>

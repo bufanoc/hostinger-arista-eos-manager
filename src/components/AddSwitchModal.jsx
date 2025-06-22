@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Wifi, User, Key, Server } from 'lucide-react';
+import { Wifi, User, Key, Server, Globe } from 'lucide-react';
+import { createConnection } from '@/services/connectionManager';
 
 const AddSwitchModal = ({ isOpen, onClose, onAddSwitch }) => {
   const { toast } = useToast();
@@ -20,7 +21,9 @@ const AddSwitchModal = ({ isOpen, onClose, onAddSwitch }) => {
   const [password, setPassword] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
 
-  const handleConnect = () => {
+  const [protocol, setProtocol] = useState('http');
+
+  const handleConnect = async () => {
     if (!ipAddress || !username || !password) {
       toast({
         variant: 'destructive',
@@ -36,24 +39,39 @@ const AddSwitchModal = ({ isOpen, onClose, onAddSwitch }) => {
       description: `Attempting to connect to ${ipAddress} via eAPI.`,
     });
 
-    setTimeout(() => {
-      const success = Math.random() > 0.2;
-
-      if (success) {
-        onAddSwitch({ ipAddress, username, password });
+    try {
+      // Attempt to create a real connection to the switch
+      const result = await createConnection(ipAddress, username, password, protocol);
+      
+      if (result.success) {
+        toast({
+          title: 'Connection Successful! ✅',
+          description: `Connected to ${result.switchData.hostname} (${ipAddress})`,
+        });
+        
+        // Pass the retrieved switch data back to the parent component
+        onAddSwitch(result.switchData);
         onClose();
       } else {
         toast({
           variant: 'destructive',
           title: 'Connection Failed',
-          description: `Could not connect to ${ipAddress}. Please check credentials and network connectivity.`,
+          description: result.error || `Could not connect to ${ipAddress}. Please check credentials and network connectivity.`,
         });
       }
+    } catch (error) {
+      console.error('Connection error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Connection Error',
+        description: error.message || 'An unexpected error occurred while connecting to the switch.',
+      });
+    } finally {
       setIsConnecting(false);
       setIpAddress('');
       setUsername('');
       setPassword('');
-    }, 2000);
+    }
   };
 
   return (
@@ -65,7 +83,7 @@ const AddSwitchModal = ({ isOpen, onClose, onAddSwitch }) => {
             <span>Add New Arista Switch</span>
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Enter the connection details for the switch. eAPI must be enabled.
+            Enter the connection details for the switch. eAPI must be enabled on port 80 (HTTP) or 443 (HTTPS).
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -107,6 +125,38 @@ const AddSwitchModal = ({ isOpen, onClose, onAddSwitch }) => {
               onChange={(e) => setPassword(e.target.value)}
               className="col-span-3 bg-slate-800 border-gray-600"
             />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="protocol" className="text-right text-gray-300">
+              <Globe className="inline-block h-4 w-4 mr-1" />
+              Protocol
+            </Label>
+            <div className="col-span-3 flex space-x-4">
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="http"
+                  name="protocol"
+                  value="http"
+                  checked={protocol === 'http'}
+                  onChange={() => setProtocol('http')}
+                  className="mr-2"
+                />
+                <label htmlFor="http" className="text-gray-300">HTTP</label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="https"
+                  name="protocol"
+                  value="https"
+                  checked={protocol === 'https'}
+                  onChange={() => setProtocol('https')}
+                  className="mr-2"
+                />
+                <label htmlFor="https" className="text-gray-300">HTTPS</label>
+              </div>
+            </div>
           </div>
         </div>
         <DialogFooter>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster } from '@/components/ui/toaster';
 import { Button } from '@/components/ui/button';
@@ -21,9 +21,11 @@ import {
   Zap,
   Globe,
   Shield,
-  BarChart3
+  BarChart3,
+  AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { getAllSwitchData, refreshAllConnections, createConnection } from '@/services/connectionManager';
 
 function App() {
   const { toast } = useToast();
@@ -33,71 +35,71 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  useEffect(() => {
-    const mockSwitches = [
-      {
-        id: 1,
-        hostname: 'core-sw-01',
-        model: 'Arista DCS-7280SR-48C6',
-        ipAddress: '192.168.1.10',
-        status: 'online',
-        uptime: '45d 12h 30m',
-        cpuUsage: 15,
-        memoryUsage: 32,
-        temperature: 42,
-        activeInterfaces: 24,
-        totalInterfaces: 48,
-        version: '4.28.3M'
-      },
-      {
-        id: 2,
-        hostname: 'access-sw-01',
-        model: 'Arista DCS-7050SX-64',
-        ipAddress: '192.168.1.11',
-        status: 'online',
-        uptime: '23d 8h 15m',
-        cpuUsage: 8,
-        memoryUsage: 28,
-        temperature: 38,
-        activeInterfaces: 32,
-        totalInterfaces: 64,
-        version: '4.28.3M'
-      },
-      {
-        id: 3,
-        hostname: 'access-sw-02',
-        model: 'Arista DCS-7050SX-64',
-        ipAddress: '192.168.1.12',
-        status: 'online',
-        uptime: '67d 4h 22m',
-        cpuUsage: 12,
-        memoryUsage: 35,
-        temperature: 41,
-        activeInterfaces: 28,
-        totalInterfaces: 64,
-        version: '4.28.3M'
-      },
-      {
-        id: 4,
-        hostname: 'spine-sw-01',
-        model: 'Arista DCS-7320X-32C',
-        ipAddress: '192.168.1.13',
-        status: 'warning',
-        uptime: '12d 16h 45m',
-        cpuUsage: 45,
-        memoryUsage: 68,
-        temperature: 55,
-        activeInterfaces: 16,
-        totalInterfaces: 32,
-        version: '4.27.2F'
+  // Function to load switch data from the API
+  const loadSwitchData = useCallback(async () => {
+    setIsLoading(true);
+    
+    try {
+      // Try to load any existing switch connections
+      const existingSwitches = getAllSwitchData();
+      
+      if (existingSwitches.length > 0) {
+        setSwitches(existingSwitches);
+        setIsLoading(false);
+      } else {
+        // If there are no existing connections, automatically connect to the test switch
+        toast({
+          title: 'Connecting to Test Switch...',
+          description: 'Attempting to connect to 192.168.88.153...',
+        });
+        
+        try {
+          const result = await createConnection('192.168.88.153', 'admin', 'Xm101ona', 'http');
+          
+          if (result.success) {
+            setSwitches([result.switchData]);
+            toast({
+              title: 'Connection Successful! ✅',
+              description: `Connected to ${result.switchData.hostname} (192.168.88.153)`,
+            });
+          } else {
+            toast({
+              variant: 'destructive',
+              title: 'Connection Failed',
+              description: result.error || 'Could not connect to test switch. Please add a switch manually.',
+            });
+            setSwitches([]);
+          }
+        } catch (error) {
+          console.error('Error connecting to test switch:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Connection Error',
+            description: error.message || 'An unexpected error occurred while connecting to the test switch.',
+          });
+          setSwitches([]);
+        }
+        
+        setIsLoading(false);
       }
-    ];
-
-    setTimeout(() => {
-      setSwitches(mockSwitches);
+    } catch (error) {
+      console.error('Error loading switch data:', error);
       setIsLoading(false);
-    }, 1500);
-  }, []);
+      setSwitches([]);
+      
+      toast({
+        variant: 'destructive',
+        title: 'Data Loading Error',
+        description: 'Failed to load switch data. Please try refreshing.',
+      });
+    }
+  }, [toast]);
+
+  // Load switch data when the component mounts
+  useEffect(() => {
+    loadSwitchData();
+  }, [loadSwitchData]);
+  
 
   const handleConfigureSwitch = (switchData) => {
     setSelectedSwitch(switchData);
@@ -107,20 +109,32 @@ function App() {
     setSelectedSwitch(null);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
     toast({
       title: "Refreshing Network Data",
       description: "Discovering and updating switch information...",
     });
     
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Refresh all connections to get updated data
+      const updatedSwitches = await refreshAllConnections();
+      setSwitches(updatedSwitches);
+      
       toast({
         title: "Network Refresh Complete! ✅",
-        description: "All switch data has been updated successfully.",
+        description: `Updated data for ${updatedSwitches.length} ${updatedSwitches.length === 1 ? 'switch' : 'switches'}.`,
       });
-    }, 2000);
+    } catch (error) {
+      console.error('Error refreshing switch data:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Refresh Failed',
+        description: error.message || 'Failed to refresh network data.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFeatureClick = (feature) => {
@@ -131,25 +145,11 @@ function App() {
   };
 
   const handleAddSwitch = (newSwitchData) => {
-    const newSwitch = {
-      id: switches.length + 1,
-      hostname: `new-switch-${switches.length + 1}`,
-      model: 'Arista DCS-7050SX-64',
-      ipAddress: newSwitchData.ipAddress,
-      status: 'online',
-      uptime: '1m',
-      cpuUsage: Math.floor(Math.random() * 10) + 5,
-      memoryUsage: Math.floor(Math.random() * 20) + 20,
-      temperature: Math.floor(Math.random() * 10) + 35,
-      activeInterfaces: Math.floor(Math.random() * 40) + 8,
-      totalInterfaces: 48,
-      version: '4.28.3M'
-    };
-
-    setSwitches(prevSwitches => [...prevSwitches, newSwitch]);
+    // The new switch data comes directly from the API now
+    setSwitches(prevSwitches => [...prevSwitches, newSwitchData]);
     toast({
       title: 'Switch Added Successfully! ✅',
-      description: `${newSwitch.hostname} (${newSwitch.ipAddress}) is now being monitored.`,
+      description: `${newSwitchData.hostname} (${newSwitchData.ipAddress}) is now being monitored.`,
     });
   };
 
@@ -310,6 +310,16 @@ function App() {
                       className="h-64 rounded-lg bg-slate-800/30 border border-gray-700 animate-pulse"
                     />
                   ))}
+                </div>
+              ) : switches.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 rounded-lg border border-yellow-500/20 bg-yellow-500/10">
+                  <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">No Switches Found</h3>
+                  <p className="text-gray-400 text-center mb-4">No switches are currently connected. Click the "Add Switch" button to connect to an Arista switch.</p>
+                  <Button onClick={() => setIsAddModalOpen(true)} className="bg-green-600 hover:bg-green-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Switch
+                  </Button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
