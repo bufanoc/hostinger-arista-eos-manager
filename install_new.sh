@@ -38,13 +38,8 @@ echo "✓ Dependencies installed."
 echo ""
 
 # Step 2: Configure firewall
-echo "🔥 [2/5] Configuring firewall..."
-apt install -y ufw
-ufw allow 'Nginx Full'
-if ! ufw status | grep -q 'Status: active'; then
-    ufw --force enable
-fi
-echo "✓ Firewall configured."
+echo "# Firewall configuration has been removed as per user request
+# UFW is not enabled to prevent blocking SSH and other ports
 echo ""
 
 # Step 3: Set up application directory
