@@ -24,7 +24,7 @@ echo "✅ Starting installation for '$DOMAIN_NAME'..."
 echo ""
 
 echo "⚙️ [1/6] Updating system and installing dependencies (Nginx, cURL)..."
-apt-get update &amp;&amp; apt-get upgrade -y > /dev/null
+apt-get update && apt-get upgrade -y > /dev/null
 apt-get install -y nginx curl > /dev/null
 echo "✓ Dependencies installed."
 echo ""
@@ -47,7 +47,7 @@ if [ -z "$SUDO_USER_NAME" ] || [ -z "$USER_HOME" ]; then
 fi
 
 sudo -u $SUDO_USER_NAME bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash" > /dev/null
-sudo -u $SUDO_USER_NAME bash -c 'export NVM_DIR="'$USER_HOME'/.nvm" &amp;&amp; [ -s "$NVM_DIR/nvm.sh" ] &amp;&amp; . "$NVM_DIR/nvm.sh" &amp;&amp; nvm install 20' > /dev/null
+sudo -u $SUDO_USER_NAME bash -c 'export NVM_DIR="'$USER_HOME'/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm install 20' > /dev/null
 
 NODE_PATH=$(find $USER_HOME/.nvm/versions/node -maxdepth 2 -type f -name "node")
 NPM_PATH=$(find $USER_HOME/.nvm/versions/node -maxdepth 2 -type f -name "npm")
@@ -65,7 +65,7 @@ SCRIPT_DIR=$(pwd)
 rsync -a --delete --chown=$SUDO_USER_NAME:$SUDO_USER_NAME --exclude '.git' --exclude 'node_modules' --exclude 'install.sh' "$SCRIPT_DIR/" "$APP_DIR/"
 
 echo "Building application. This may take a moment..."
-sudo -u $SUDO_USER_NAME bash -c "cd $APP_DIR &amp;&amp; npm install &amp;&amp; npm run build" > /dev/null
+sudo -u $SUDO_USER_NAME bash -c "cd $APP_DIR && npm install && npm run build" > /dev/null
 echo "✓ Application deployed and built."
 echo ""
 
