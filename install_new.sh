@@ -38,8 +38,8 @@ echo "✓ Dependencies installed."
 echo ""
 
 # Step 2: Configure firewall
-echo "# Firewall configuration has been removed as per user request
-# UFW is not enabled to prevent blocking SSH and other ports
+echo "# Firewall configuration has been removed as per user request"
+echo "# UFW is not enabled to prevent blocking SSH and other ports"
 echo ""
 
 # Step 3: Set up application directory
