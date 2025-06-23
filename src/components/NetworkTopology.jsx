@@ -13,7 +13,8 @@ import {
   Network,
   Zap,
   Eye,
-  Settings
+  Settings,
+  AlertCircle
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
